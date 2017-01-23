@@ -75,14 +75,27 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="Laberinto.CSharp.Plugins.csproj">
+      <Project>{6636DEFC-A555-5912-D930-B243B78D1C7C}</Project>
+      <Name>Laberinto.CSharp.Plugins</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="Assets\Scripts\Enemigo.cs" />
+    <Compile Include="Assets\Scripts\EventController.cs" />
+    <Compile Include="Assets\Scripts\MenuController.cs" />
+    <Compile Include="Assets\Scripts\MusicController.cs" />
     <Compile Include="Assets\Scripts\Personaje.cs" />
     <Compile Include="Assets\Scripts\TestJenn.cs" />
     <Compile Include="Assets\Scripts\TesterJennn\BaseEnemy.cs" />
+    <Compile Include="Assets\Scripts\TesterJennn\Controller.cs" />
     <Compile Include="Assets\Scripts\TesterJennn\GoToMainMenu.cs" />
     <Compile Include="Assets\Scripts\TesterJennn\MoveTrap.cs" />
+    <Compile Include="Assets\Scripts\TesterJennn\Salida.cs" />
     <Compile Include="Assets\Scripts\TesterJennn\SkeletonController.cs" />
-    <Compile Include="Assets\Scripts\Utils.cs" />
+    <Compile Include="Assets\Scripts\TesterJennn\Test.cs" />
+    <Compile Include="Assets\Scripts\TesterJennn\TestCamera.cs" />
+    <Compile Include="Assets\Win.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>
