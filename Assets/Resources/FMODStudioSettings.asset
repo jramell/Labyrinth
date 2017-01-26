@@ -13,9 +13,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   HasSourceProject: 1
   HasPlatforms: 1
-  SourceProjectPath: C:\Users\Sergio\Desktop\Insert Coin\Sesion Fmod\Insert Coind
-    Fmod\Insert Coind Fmod.fspro
-  SourceBankPath: C:\Users\Sergio\Desktop\Insert Coin\Sesion Fmod\Insert Coind Fmod\Build
+  SourceProjectPath: C:\Users\Sergio\Desktop\Insert Coind Fmod\Insert Coind Fmod.fspro
+  SourceBankPath: C:\Users\Sergio\Desktop\Insert Coind Fmod\Build
   AutomaticEventLoading: 1
   AutomaticSampleLoading: 0
   ImportType: 0

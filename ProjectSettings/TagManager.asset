@@ -5,6 +5,9 @@ TagManager:
   serializedVersion: 2
   tags:
   - Enemigo
+  - Laberinto
+  - SprayMark
+  - Salida
   layers:
   - Default
   - TransparentFX

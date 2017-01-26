@@ -34,18 +34,19 @@ public class Enemigo : MonoBehaviour
 
     private GameObject player;
 
-    [Tooltip("Monster's speed when wandering around")]
+    [Tooltip("Velocidad normal del monstruo")]
     public float wanderingSpeed;
 
-    [Tooltip("Monster's chasing speed when he knows the player's location")]
+    [Tooltip("Velocidad de persecución del monstruo")]
     public float chasingSpeed;
 
-    [Tooltip("Shows monster's range")]
+    [Tooltip("Muestra el rango de persecución del mostruo")]
     public bool debug;
 
     /// <summary>
     /// How far the enemy can wander around the player when it doesn't know its location
     /// </summary>
+    [Tooltip("Rango en el que se generará un punto aleatorio cuando no se conoce la ubicación del jugador")]
     public float distanceToWanderAroundPlayer = 10000f;
 
     private NavMeshAgent navMeshAgent;
@@ -65,11 +66,11 @@ public class Enemigo : MonoBehaviour
     /// <summary>
     /// Hears player automatically if player is less than this distance
     /// </summary>
-    [Tooltip("When the player is closer than this, the enemy chases him faster")]
-    public float distanceToHearPlayer;
+    [Tooltip("Si el jugador está más cerca que esto lo persigue")]
+    public float distanciaParaPerseguir;
 
-    [Tooltip("Time the guy waits before whistling again")]
-    public float timeBetweenWhistles = 10f;
+    [Tooltip("Tiempo entre silbidos")]
+    public float tiempoEntreSilbidos = 10f;
 
     private AudioSource whistle;
 
@@ -85,7 +86,8 @@ public class Enemigo : MonoBehaviour
     /// <summary>
     /// How much time there is between the enemy steps animation. Used to play the footstep and other sounds
     /// </summary>
-    float stepTime = 0.75f;
+    [Tooltip("Cuánto tiempo hay entre cada sonido de pasos del Silbón")]
+    public float tiempoEntrePasos = 0.75f;
 
     float stepCounter;
 
@@ -114,12 +116,18 @@ public class Enemigo : MonoBehaviour
         {
             return reachedTarget;
         }
-        //set
-        //{
-        //    reachedTarget = value;
-        //}
     }
 
+    float originalStepTime;
+
+    Animator animator;
+
+    [Tooltip("Velocidad normal de las animaciones. 1 es su velocidad original, pero es útil cambiarla para que se vea bien según la velocidad del Silbón")]
+    public float velocidadAnimaciones;
+
+    bool foundThePlayerForTheFirstTime;
+
+    //MenuController menuController;
 
     void Start()
     {
@@ -143,6 +151,10 @@ public class Enemigo : MonoBehaviour
         whistle = GetComponent<AudioSource>();
         //GenerateRandomTarget();
         musicController = FindObjectOfType<MusicController>();
+        originalStepTime = tiempoEntrePasos;
+        animator = transform.GetChild(0).gameObject.GetComponent<Animator>();
+        animator.speed = velocidadAnimaciones;
+       // menuController = GameObject.Find("ScriptHolder").GetComponent<MenuController>();
     }
 
     void OnDrawGizmos()
@@ -150,7 +162,7 @@ public class Enemigo : MonoBehaviour
         if (debug)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawSphere(transform.position, distanceToHearPlayer);
+            Gizmos.DrawSphere(transform.position, distanciaParaPerseguir);
         }
     }
 
@@ -162,7 +174,7 @@ public class Enemigo : MonoBehaviour
 
         if (chasingEnabled)
         {
-            if (distanceFromPlayer < distanceToHearPlayer)
+            if (distanceFromPlayer < distanciaParaPerseguir)
             {
                 EscucharSonido(player.transform.position);
             }
@@ -183,28 +195,13 @@ public class Enemigo : MonoBehaviour
                 }
             }
 
-            whistleCounter += Time.deltaTime;
-            if (whistleCounter >= timeBetweenWhistles)
-            {
-                whistleCounter = 0;
-                Whistle(1 * (distanceFromPlayer / maxDistanceFromPlayer));
-            }
+            ManageWhistle();
 
-            stepCounter += Time.deltaTime;
-            if (stepCounter >= stepTime)
-            {
-                stepCounter = 0;
-                PlayMovementSounds();
-            }
+            ManageStepSound();
 
             if (!chasingThePlayer)
             {
-                recastCounter += Time.deltaTime;
-                if (recastCounter > 8f)
-                {
-                    recastCounter = 0;
-                    GenerateRandomTarget();
-                }
+                RecastMovementPoint();
             }
         }
 
@@ -215,14 +212,68 @@ public class Enemigo : MonoBehaviour
             if (distanceFromTarget < 0.2f)
             {
                 reachedTarget = true;
-                //Debug.Log("reached target");
+            }
+
+            //Must change this piece of code to method once step works
+            stepCounter += Time.deltaTime;
+            if (stepCounter >= tiempoEntrePasos)
+            {
+                stepCounter = 0;
+                PlayMovementSounds();
             }
         }
     }
 
-    void ResetValues()
+    void ManageStepSound()
     {
+        stepCounter += Time.deltaTime;
+        if (stepCounter >= tiempoEntrePasos)
+        {
+            stepCounter = 0;
+            PlayMovementSounds();
+        }
+    }
+
+    void ManageWhistle()
+    {
+        if (!chasingThePlayer)
+        {
+            whistleCounter += Time.deltaTime;
+            if (whistleCounter >= tiempoEntreSilbidos)
+            {
+                whistleCounter = 0;
+                Whistle(1 * (distanceFromPlayer / maxDistanceFromPlayer));
+            }
+        }
+    }
+
+    void RecastMovementPoint()
+    {
+        recastCounter += Time.deltaTime;
+        if (recastCounter > 8f)
+        {
+            recastCounter = 0;
+            GenerateRandomTarget();
+        }
+    }
+
+    public void ResetValues()
+    {
+        tiempoEntrePasos = originalStepTime;
         navMeshAgent.speed = wanderingSpeed;
+        animator.speed = velocidadAnimaciones;
+    }
+
+    /// <summary>
+    /// Cambia la velocidad del enemigo según el porcentaje, donde 1 sería dejar la velocidad actual. También cambia las velocidades de
+    /// las animaciones y el tiempo en el que suenan los pasos
+    /// </summary>
+    /// <param name="porcentaje"></param>
+    public void CambiarVelocidadEnPorcentaje(float porcentaje)
+    {
+        timeToPlayStepSound *= porcentaje;
+        animator.speed = porcentaje;
+        navMeshAgent.speed *= porcentaje;
     }
 
     /// <summary>
@@ -253,6 +304,7 @@ public class Enemigo : MonoBehaviour
         selfWithoutHeight = new Vector2(transform.position.x, transform.position.z);
         distanceFromPlayer = Vector2.Distance(targetWithoutHeight, selfWithoutHeight);
         float distanceFactor = 1 * (distanceFromPlayer / maxDistanceFromPlayer);
+        //Debug.Log("distance factor: " + distanceFactor);
         ParamSilbido.setValue(distanceFactor);
         AudioEventoSilbido.start();
     }
@@ -277,7 +329,14 @@ public class Enemigo : MonoBehaviour
     public void EnableChasing()
     {
         chasingEnabled = true;
+        ResetValues();
         GenerateRandomTarget();
+    }
+
+    public void DisableChasing()
+    {
+        chasingEnabled = false;
+        navMeshAgent.speed = 0;
     }
 
     /// <summary>
@@ -292,6 +351,11 @@ public class Enemigo : MonoBehaviour
             PlayMenacingSound();
         }
         ChasingThePlayer();
+        if (!foundThePlayerForTheFirstTime)
+        {
+            EventController.currentEvent = 3;
+            foundThePlayerForTheFirstTime = true;
+        }
     }
 
     void ChasingThePlayer()
@@ -300,6 +364,7 @@ public class Enemigo : MonoBehaviour
         recastCounter = 0;
         musicController.PlayChasingMusic();
     }
+
 
     void StopChasingThePlayer()
     {
@@ -319,6 +384,31 @@ public class Enemigo : MonoBehaviour
         if (col.gameObject.tag == "Player")
         {
             player.GetComponent<TestCamera>().Die();
+        }
+    }
+
+    public float timeToPlayStepSound
+    {
+        get
+        {
+            return tiempoEntrePasos;
+        }
+        set
+        {
+            tiempoEntrePasos = value;
+        }
+    }
+
+    public float speed
+    {
+        get
+        {
+            return navMeshAgent.speed;
+        }
+
+        set
+        {
+            navMeshAgent.speed = value;
         }
     }
 }

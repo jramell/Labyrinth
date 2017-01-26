@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class TestCamera : MonoBehaviour
 {
@@ -9,14 +11,14 @@ public class TestCamera : MonoBehaviour
 
     // PASOS JUGADOR
     [FMODUnity.EventRef]
-    public string EventoSteps = "event:/Steps";
-    public static FMOD.Studio.EventInstance AudioEventoSteps;
+    public string EventoJugador = "event:/Jugador";
+    public static FMOD.Studio.EventInstance AudioEventoJugador;
+    public static FMOD.Studio.ParameterInstance ParamPasos;
 
-    // MUSICA 
+    // HELP 
     [FMODUnity.EventRef]
-    public string EventoMusic = "event:/Music";
-    public static FMOD.Studio.EventInstance AudioEventoMusic;
-    public static FMOD.Studio.ParameterInstance ParamMusic;
+    public string EventoHelp = "event:/Help";
+    public static FMOD.Studio.EventInstance AudioEventoHelp;
 
     //-----------------------------------------------------------------//
 
@@ -33,8 +35,9 @@ public class TestCamera : MonoBehaviour
     private float staminaLocal;
 
     private Enemigo enemigoScript;
-    public bool isDead = false;
-    public bool canRun = false;
+
+    private bool isDead = false;
+    private bool canRun = false;
 
     /// <summary>
     /// Mouse sensitivity
@@ -52,52 +55,158 @@ public class TestCamera : MonoBehaviour
 
     private float yRot;
 
+    private MusicController musicController;
+
     private const string MOUSE_Y = "Mouse Y";
     private const string MOUSE_X = "Mouse X";
 
+    //nuevo
+    public GameObject deathScreen;
+
+    private bool shouldTakeStep;
+
+    private float timeBetweenStepsWalking = 0.75f;
+
+    private float timeBetweenStepsRunning = 0.4f;
+
+    private float timeBetweenSteps;
+
+    float stepCounter;
+
+    private bool isRunning;
+
+    private GameObject salida;
+
+    private Salida salidaScript;
+    public GameObject Salida;
+
+    bool playerEnabled;
+
+    public bool debug = true;
+
+
+    //-----------------------LIGHT---------------//
+    public int lightFactor = 0;
+
+    // Light that should be controlled by the LightController
+    public Light controlledLight01 = null;
+    public Light l;
+
     void Start()
     {
-
+        if (debug)
+        {
+            Enable();
+        }
         //---------------SINCRONIZANDO EVENTOS DE FMOD STUDIO--------------//
-        AudioEventoSteps = FMODUnity.RuntimeManager.CreateInstance(EventoSteps);
+        AudioEventoHelp = FMODUnity.RuntimeManager.CreateInstance(EventoHelp);
 
-        AudioEventoMusic = FMODUnity.RuntimeManager.CreateInstance(EventoMusic);
-        AudioEventoMusic.getParameter("Musica", out ParamMusic);
-        AudioEventoMusic.start();
+        AudioEventoJugador = FMODUnity.RuntimeManager.CreateInstance(EventoJugador);
+        AudioEventoJugador.getParameter("correr", out ParamPasos);
+
         //-----------------------------------------------------------------//
 
+        timeBetweenSteps = timeBetweenStepsWalking;
+        isDead = false;
         cameraMovementEnabled = true;
         mainCamera = FindObjectOfType<Camera>();
         xRot = transform.rotation.eulerAngles.x;
         yRot = transform.rotation.eulerAngles.y;
         //Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        //Cursor.visible = false;
         enemigoScript = enemigo.GetComponent<Enemigo>();
-
+        musicController = FindObjectOfType<MusicController>();
         staminaLocal = staminaMax;
+        //musicController.PlayChasingMusic();
+        //            ParamPasos.setValue(0.0f);
+        salidaScript = FindObjectOfType<Salida>();
+        salida = salidaScript.gameObject;
     }
 
     void Update()
     {
-        CheckInput();
-
-        if (cameraMovementEnabled)
+        if (!isDead && playerEnabled)
         {
-            //So the player is able to rotate relative to the y axis with the camera. This is setup this way so its local axis is synchronized
-            //with what the player sees
-            transform.localEulerAngles = new Vector3(0, yRot, 0);
+            if (!shouldTakeStep)
+            {
+                if (isRunning)
+                {
+                    timeBetweenSteps = timeBetweenStepsRunning;
+                }
+                else
+                {
+                    timeBetweenSteps = timeBetweenStepsWalking;
+                }
+                stepCounter += Time.deltaTime;
+                if (stepCounter > timeBetweenSteps)
+                {
+                    shouldTakeStep = true;
+                    stepCounter = 0;
+                }
+            }
 
-            //So only the camera rotates relative to the x axis, not the player
-            mainCamera.transform.localEulerAngles = new Vector3(xRot, 0, 0);
+            CheckInput();
 
-            //Because vertical camera rotation is relative to the in-game x axis
-            xRot += Input.GetAxis(MOUSE_Y) * mouseSensitivity * -1;
+            if (cameraMovementEnabled)
+            {
+                //So the player is able to rotate relative to the y axis with the camera. This is setup this way so its local axis is synchronized
+                //with what the player sees
+                transform.localEulerAngles = new Vector3(0, yRot, 0);
 
-            //Because horizontal camera rotation is relative to the in-game y axis
-            yRot += Input.GetAxis(MOUSE_X) * mouseSensitivity;
+                //So only the camera rotates relative to the x axis, not the player
+                mainCamera.transform.localEulerAngles = new Vector3(xRot, 0, 0);
 
-            xRot = Mathf.Clamp(xRot, -55, 35);
+                //Because vertical camera rotation is relative to the in-game x axis
+                xRot += Input.GetAxis(MOUSE_Y) * mouseSensitivity * -1;
+
+                //Because horizontal camera rotation is relative to the in-game y axis
+                yRot += Input.GetAxis(MOUSE_X) * mouseSensitivity;
+
+                xRot = Mathf.Clamp(xRot, -55, 35);
+            }
         }
+        if (controlledLight01 != null)
+        { // If we have a light as a field
+            l = controlledLight01.GetComponent<Light>();
+        }
+    }
+
+    public void Enable()
+    {
+        xRot = transform.rotation.eulerAngles.x;
+        yRot = transform.rotation.eulerAngles.y;
+        playerEnabled = true;
+    }
+
+    public void EnableWithRotation(float x, float y)
+    {
+        xRot = x;
+        yRot = y;
+        //playerEnabled = true;
+    }
+
+    public void Disable()
+    {
+        playerEnabled = false;
+    }
+
+    void PlayDeathSFX()
+    {
+        //Suena el sonido de cuando se muere el jugador
+    }
+
+    public void Die()
+    {
+        isDead = true;
+        deathScreen.SetActive(true);
+        StartCoroutine(Restart());
+        PlayDeathSFX();
+    }
+
+    IEnumerator Restart()
+    {
+        yield return new WaitForSeconds(1.5f);
+        SceneManager.LoadScene("Main");
     }
 
     private void CheckInput()
@@ -118,21 +227,36 @@ public class TestCamera : MonoBehaviour
         {
             WalkLeft();
         }
-        if (Input.GetKey(KeyCode.E))
+        if (Input.GetKey(KeyCode.LeftShift))
         {
             Run();
         }
 
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             PedirAyuda();
         }
     }
 
+    void PlayWalkingSound()
+    {
+        if (shouldTakeStep)
+        {
+            AudioEventoJugador.start();
+            shouldTakeStep = false;
+        }
+    }
+
+    void PlayRunningSound()
+    {
+        ParamPasos.setValue(1.0f);
+        AudioEventoJugador.start();
+    }
+
     private void Walk()
     {
-        // ---- esta linea va a reproducir el audio de los pasos----//
-        AudioEventoSteps.start();
+        isRunning = false;
+        PlayWalkingSound();
 
         transform.Translate(
             movementDirection *
@@ -143,8 +267,8 @@ public class TestCamera : MonoBehaviour
     private void WalkRight()
     {
         // ---- esta linea va a reproducir el audio de los pasos----//
-        AudioEventoSteps.start();
-
+        PlayWalkingSound();
+        isRunning = false;
         Vector3 orig = movementDirection;
         movementDirection = new Vector3(1, 0, 0);
         transform.Translate(movementDirection * movementSpeed * Time.deltaTime);
@@ -154,7 +278,8 @@ public class TestCamera : MonoBehaviour
     private void WalkLeft()
     {
         // ---- esta linea va a reproducir el audio de los pasos----//
-        AudioEventoSteps.start();
+        PlayWalkingSound();
+        isRunning = false;
         Vector3 orig = movementDirection;
         movementDirection = new Vector3(-1, 0, 0);
         transform.Translate(movementDirection * movementSpeed * Time.deltaTime);
@@ -165,10 +290,42 @@ public class TestCamera : MonoBehaviour
     {
         if (staminaMax >= 0)
         {
+            isRunning = true;
             transform.Translate(movementDirection * movementSpeedRun * Time.deltaTime);
             HacerRuido(5);
-            Debug.Log("PERSONAJE CORRIO");
+            //Debug.Log("PERSONAJE CORRIO");
             UsoStamina();
+            //PlayWalkingSound();
+        }
+    }
+
+    private Color buscarSalida()
+    {
+        float rangoCaliente = 5;
+        float rangoMedio = 15;
+        Vector3 direction = Salida.transform.position - this.transform.position;
+        //cambio a radianes de la mira a la salida
+        float radianes = Mathf.Atan2(direction.x, direction.z);
+        //cambio a angulos de la mira de la salida
+        float angulos = radianes * Mathf.Rad2Deg;
+        //asignacion de los angulos de seguimiento entre la salida y el personaje
+        this.transform.eulerAngles = (new Vector3(0, angulos, 0));
+
+        //Debug.Log("MAGNITUDDDD" + direction.magnitude);
+
+        if (direction.magnitude <= rangoCaliente)
+        {
+            return Color.red;
+        }
+        else if (direction.magnitude <= rangoMedio)
+        {
+            return Color.yellow;
+            //color AMARILLO EN LA LUZ
+        }
+        else
+        {
+            return Color.blue;
+            //COLOR AZUL EN LA LUZ 
         }
     }
 
@@ -190,6 +347,8 @@ public class TestCamera : MonoBehaviour
 
     private void Backward()
     {
+        isRunning = false;
+        PlayWalkingSound();
         transform.Translate(
             movementDirection *
             movementSpeed *
@@ -200,18 +359,35 @@ public class TestCamera : MonoBehaviour
 
     private void PedirAyuda()
     {
-        Vector3 posicion = this.transform.position;
-        //SONAR SALIDA
-        Debug.Log("PIDIO AYUDA!!!");
-        enemigoScript.EscucharSonido(transform.position);
+        Color flag = buscarSalida();
+        PlayHelpSound();
+        //Vector3 position = this.transform.position;
+        //enemigoScript.EscucharSonido(transform.position);
+        StartCoroutine(SequenceOfHelpEvents(transform.position, flag));
+        
 
     }
 
-    private void PlaySound()
+    /// <summary>
+    /// Maneja todos los eventos que suceden después de que el jugador pide ayuda para que no se confundan
+    /// </summary>
+    /// <returns></returns>
+    IEnumerator SequenceOfHelpEvents(Vector3 positionWhereHelpWasAsked, Color flag)
     {
-        //darle play al sonido, resibirlo por parametro 
+        Color original = l.color;
+        yield return new WaitForSeconds(0.6f);
+        //Flag changes color at the same time response sounds
+        l.color = flag;
+        salidaScript.JugadorLlamo();
+        yield return new WaitForSeconds(0.8f);
+        l.color = original;
+        enemigoScript.EscucharSonido(positionWhereHelpWasAsked);
     }
 
+    void PlayHelpSound()
+    {
+        AudioEventoHelp.start();
+    }
 
     private void WinLevel()
     {

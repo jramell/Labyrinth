@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class Salida : MonoBehaviour
 {
 
+    EventController eventController;
     //------LLAMANDO EVENTOS DE FMOD ----------------------------------------// 
 
     //Musica
@@ -18,13 +19,14 @@ public class Salida : MonoBehaviour
     void Start()
     {
         AudioEventoAngel = FMODUnity.RuntimeManager.CreateInstance(EventoAngel);
+        eventController = FindObjectOfType<EventController>();
     }
 
     void OnTriggerEnter(Collider col)
     {
         if (col.gameObject.tag == "Player")
         {
-            col.gameObject.GetComponent<TestCamera>().WinLevel();
+            eventController.PlayWinEvent();
         }
     }
 

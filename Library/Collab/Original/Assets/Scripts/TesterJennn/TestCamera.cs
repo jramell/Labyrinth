@@ -11,14 +11,14 @@ public class TestCamera : MonoBehaviour
 
     // PASOS JUGADOR
     [FMODUnity.EventRef]
-    public string EventoSteps = "event:/Steps";
-    public static FMOD.Studio.EventInstance AudioEventoSteps;
+    public string EventoJugador = "event:/Jugador";
+    public static FMOD.Studio.EventInstance AudioEventoJugador;
+    public static FMOD.Studio.ParameterInstance ParamPasos;
 
-    // MUSICA 
+    // HELP 
     [FMODUnity.EventRef]
-    public string EventoMusic = "event:/Music";
-    public static FMOD.Studio.EventInstance AudioEventoMusic;
-    public static FMOD.Studio.ParameterInstance ParamMusic;
+    public string EventoHelp = "event:/Help";
+    public static FMOD.Studio.EventInstance AudioEventoHelp;
 
     //-----------------------------------------------------------------//
 
@@ -63,33 +63,88 @@ public class TestCamera : MonoBehaviour
     //nuevo
     public GameObject deathScreen;
 
+    private bool shouldTakeStep;
+
+    private float timeBetweenStepsWalking = 0.75f;
+
+    private float timeBetweenStepsRunning = 0.4f;
+
+    private float timeBetweenSteps;
+
+    float stepCounter;
+
+    private bool isRunning;
+
+    private GameObject salida;
+
+    private Salida salidaScript;
+    public GameObject Salida;
+
+    bool playerEnabled;
+
+    public bool debug = true;
+
+
+    //-----------------------LIGHT---------------//
+    public int lightFactor = 0;
+
+    // Light that should be controlled by the LightController
+    public Light controlledLight01 = null;
+    public Light l;
+
     void Start()
     {
-
+        if (debug)
+        {
+            Enable();
+        }
         //---------------SINCRONIZANDO EVENTOS DE FMOD STUDIO--------------//
-        AudioEventoSteps = FMODUnity.RuntimeManager.CreateInstance(EventoSteps);
+        AudioEventoHelp = FMODUnity.RuntimeManager.CreateInstance(EventoHelp);
 
-        AudioEventoMusic = FMODUnity.RuntimeManager.CreateInstance(EventoMusic);
-        AudioEventoMusic.getParameter("Musica", out ParamMusic);
-        AudioEventoMusic.start();
+        AudioEventoJugador = FMODUnity.RuntimeManager.CreateInstance(EventoJugador);
+        AudioEventoJugador.getParameter("correr", out ParamPasos);
+
         //-----------------------------------------------------------------//
 
+        timeBetweenSteps = timeBetweenStepsWalking;
         isDead = false;
         cameraMovementEnabled = true;
         mainCamera = FindObjectOfType<Camera>();
         xRot = transform.rotation.eulerAngles.x;
         yRot = transform.rotation.eulerAngles.y;
         //Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        //Cursor.visible = false;
         enemigoScript = enemigo.GetComponent<Enemigo>();
         musicController = FindObjectOfType<MusicController>();
         staminaLocal = staminaMax;
+        //musicController.PlayChasingMusic();
+        //            ParamPasos.setValue(0.0f);
+        salidaScript = FindObjectOfType<Salida>();
+        salida = salidaScript.gameObject;
     }
 
     void Update()
     {
-        if (!isDead)
+        if (!isDead && playerEnabled)
         {
+            if (!shouldTakeStep)
+            {
+                if (isRunning)
+                {
+                    timeBetweenSteps = timeBetweenStepsRunning;
+                }
+                else
+                {
+                    timeBetweenSteps = timeBetweenStepsWalking;
+                }
+                stepCounter += Time.deltaTime;
+                if (stepCounter > timeBetweenSteps)
+                {
+                    shouldTakeStep = true;
+                    stepCounter = 0;
+                }
+            }
+
             CheckInput();
 
             if (cameraMovementEnabled)
@@ -110,6 +165,29 @@ public class TestCamera : MonoBehaviour
                 xRot = Mathf.Clamp(xRot, -55, 35);
             }
         }
+        if (controlledLight01 != null)
+        { // If we have a light as a field
+            l = controlledLight01.GetComponent<Light>();
+        }
+    }
+
+    public void Enable()
+    {
+        xRot = transform.rotation.eulerAngles.x;
+        yRot = transform.rotation.eulerAngles.y;
+        playerEnabled = true;
+    }
+
+    public void EnableWithRotation(float x, float y)
+    {
+        xRot = x;
+        yRot = y;
+        //playerEnabled = true;
+    }
+
+    public void Disable()
+    {
+        playerEnabled = false;
     }
 
     void PlayDeathSFX()
@@ -128,7 +206,8 @@ public class TestCamera : MonoBehaviour
     IEnumerator Restart()
     {
         yield return new WaitForSeconds(1.5f);
-        SceneManager.LoadScene("Main");
+        SceneManager.LoadScene("MainConMenu");
+        Cursor.visible = true;
     }
 
     private void CheckInput()
@@ -149,12 +228,12 @@ public class TestCamera : MonoBehaviour
         {
             WalkLeft();
         }
-        if (Input.GetKey(KeyCode.E))
+        if (Input.GetKey(KeyCode.LeftShift))
         {
             Run();
         }
 
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             PedirAyuda();
         }
@@ -162,16 +241,22 @@ public class TestCamera : MonoBehaviour
 
     void PlayWalkingSound()
     {
-        //Suena el sonido de cuando el jugador da pasos
+        if (shouldTakeStep)
+        {
+            AudioEventoJugador.start();
+            shouldTakeStep = false;
+        }
     }
 
     void PlayRunningSound()
     {
-        //Suena el sonido de cuando el jugador corre (o se acelera el de cuando el jugador da pasos, luego se cuadra mejor)
+        ParamPasos.setValue(1.0f);
+        AudioEventoJugador.start();
     }
 
     private void Walk()
     {
+        isRunning = false;
         PlayWalkingSound();
 
         transform.Translate(
@@ -184,7 +269,7 @@ public class TestCamera : MonoBehaviour
     {
         // ---- esta linea va a reproducir el audio de los pasos----//
         PlayWalkingSound();
-
+        isRunning = false;
         Vector3 orig = movementDirection;
         movementDirection = new Vector3(1, 0, 0);
         transform.Translate(movementDirection * movementSpeed * Time.deltaTime);
@@ -195,6 +280,7 @@ public class TestCamera : MonoBehaviour
     {
         // ---- esta linea va a reproducir el audio de los pasos----//
         PlayWalkingSound();
+        isRunning = false;
         Vector3 orig = movementDirection;
         movementDirection = new Vector3(-1, 0, 0);
         transform.Translate(movementDirection * movementSpeed * Time.deltaTime);
@@ -205,11 +291,42 @@ public class TestCamera : MonoBehaviour
     {
         if (staminaMax >= 0)
         {
+            isRunning = true;
             transform.Translate(movementDirection * movementSpeedRun * Time.deltaTime);
             HacerRuido(5);
-            Debug.Log("PERSONAJE CORRIO");
+            //Debug.Log("PERSONAJE CORRIO");
             UsoStamina();
-            PlayRunningSound();
+            //PlayWalkingSound();
+        }
+    }
+
+    private Color buscarSalida()
+    {
+        float rangoCaliente = 5;
+        float rangoMedio = 15;
+        Vector3 direction = Salida.transform.position - this.transform.position;
+        //cambio a radianes de la mira a la salida
+        float radianes = Mathf.Atan2(direction.x, direction.z);
+        //cambio a angulos de la mira de la salida
+        float angulos = radianes * Mathf.Rad2Deg;
+        //asignacion de los angulos de seguimiento entre la salida y el personaje
+        this.transform.eulerAngles = (new Vector3(0, angulos, 0));
+
+        //Debug.Log("MAGNITUDDDD" + direction.magnitude);
+
+        if (direction.magnitude <= rangoCaliente)
+        {
+            return Color.red;
+        }
+        else if (direction.magnitude <= rangoMedio)
+        {
+            return Color.yellow;
+            //color AMARILLO EN LA LUZ
+        }
+        else
+        {
+            return Color.blue;
+            //COLOR AZUL EN LA LUZ 
         }
     }
 
@@ -231,6 +348,7 @@ public class TestCamera : MonoBehaviour
 
     private void Backward()
     {
+        isRunning = false;
         PlayWalkingSound();
         transform.Translate(
             movementDirection *
@@ -242,25 +360,53 @@ public class TestCamera : MonoBehaviour
 
     private void PedirAyuda()
     {
-        Vector3 position = this.transform.position;
-        enemigoScript.EscucharSonido(transform.position);
+        Color flag = buscarSalida();
         PlayHelpSound();
+        //Vector3 position = this.transform.position;
+        //enemigoScript.EscucharSonido(transform.position);
+        StartCoroutine(SequenceOfHelpEvents(transform.position, flag));
+        
+
+    }
+
+    /// <summary>
+    /// Maneja todos los eventos que suceden después de que el jugador pide ayuda para que no se confundan
+    /// </summary>
+    /// <returns></returns>
+    IEnumerator SequenceOfHelpEvents(Vector3 positionWhereHelpWasAsked, Color flag)
+    {
+        Color original = l.color;
+        yield return new WaitForSeconds(0.6f);
+        //Flag changes color at the same time response sounds
+        l.color = flag;
+        salidaScript.JugadorLlamo();
+        yield return new WaitForSeconds(0.8f);
+        l.color = original;
+        enemigoScript.EscucharSonido(positionWhereHelpWasAsked);
     }
 
     void PlayHelpSound()
     {
-        //Suena el sonido de cuando el jugador pide ayuda (
+        AudioEventoHelp.start();
     }
 
-    private void WinLevel()
+    public void WinLevel()
     {
-        Debug.Log("WIN !!!!!!!!!!!!");
+        //   Debug.Log("WIN !!!!!!!!!!!!");
+        //   Invoke("LoadWinScene", 3f);
+        enemigo.SetActive(false);
+        PlayVictoria();
         Invoke("LoadWinScene", 3f);
     }
+
+    void PlayVictoria()
+    {
+        //Suena el sonido de victoria
+    }
+
     private void LoadWinScene()
     {
-        //cargar  scena ganadora
-        // SceneManager.LoadScene("aqui");
+        SceneManager.LoadScene("MainConMenu");
     }
 
     private void GetKilled()

@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: b2446b1086cf4754a989c91e4d06847e
+timeCreated: 1485292838
+licenseType: Free
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Feral
+  fontNames:
+  - Feral
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
