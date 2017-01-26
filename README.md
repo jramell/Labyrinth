@@ -1,5 +1,3 @@
-This is the repository of a game whose development started in the Global Game Jam 2017. 
-
 ### Credits
 
 Daniel Herrera - Music
