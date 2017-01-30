@@ -20,9 +20,16 @@ public class EnemyTrigger : MonoBehaviour
         {
             if (col.gameObject.tag == "Player")
             {
-                enemigo.EnableChasing();
+                StartCoroutine(EnableEnemyAfter(15f));
                 done = true;
             }
         }
     }
+
+    IEnumerator EnableEnemyAfter(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+        enemigo.EnableChasing();
+    }
+
 }

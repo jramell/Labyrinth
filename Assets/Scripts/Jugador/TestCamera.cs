@@ -9,6 +9,8 @@ public class TestCamera : MonoBehaviour
 
     public const KeyCode RUN_KEY = KeyCode.LeftShift;
     public const KeyCode INTERACTION_KEY = KeyCode.F;
+    public const KeyCode ALTERNATIVE_INTERACTION_KEY = KeyCode.E;
+    public const KeyCode ESCAPE = KeyCode.Escape;
     //------------LLAMANDO EVENTOS DE FMOD STUDIO-----------------------// 
 
     // PASOS JUGADOR
@@ -167,7 +169,8 @@ public class TestCamera : MonoBehaviour
             //Because horizontal camera rotation is relative to the in-game y axis
             yRot += Input.GetAxis(MOUSE_X) * mouseSensitivity;
 
-            xRot = Mathf.Clamp(xRot, -55, 35);
+            //Aquí está el bug, creo lal ... revisar luego
+            xRot = Mathf.Clamp(xRot, -55, 65);
         }
         if (controlledLight01 != null)
         { // If we have a light as a field
@@ -202,21 +205,26 @@ public class TestCamera : MonoBehaviour
 
     void PlayDeathSFX()
     {
+        AudioSource deathSFX = GameObject.Find("AudioHolder").GetComponent<AudioSource>();
         //Suena el sonido de cuando se muere el jugador
+        deathSFX.Play();
     }
 
     public void Die()
     {
-        isDead = true;
-        deathScreen.SetActive(true);
-        StartCoroutine(Restart());
-        PlayDeathSFX();
-        musicController.StopMusic();
+        if (!isDead)
+        {
+            isDead = true;
+            deathScreen.SetActive(true);
+            StartCoroutine(Restart());
+            musicController.StopMusic();
+            PlayDeathSFX();
+        }
     }
 
     IEnumerator Restart()
     {
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(1.6f);
         EventController.currentEvent = 0;
         SceneManager.LoadScene(SceneController.ESCENA_PRIMER_NIVEL);
         //Application.Quit();
@@ -378,7 +386,7 @@ public class TestCamera : MonoBehaviour
         //Vector3 position = this.transform.position;
         //enemigoScript.EscucharSonido(transform.position);
         StartCoroutine(SequenceOfHelpEvents(transform.position, flag));
-        
+
 
     }
 

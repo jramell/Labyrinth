@@ -158,8 +158,9 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: The Whistler is a soul-hunting, dog fearful ghost whose whistle sounds close
-    when he is far, and far when he is close.
+  m_Text: "On the plains where Colombia and Venezuela meet, lives a tall, thin man
+    called El Silb\xF3n, who haunts the night carrying his father's bones. His <color=red><b>whistling</b></color>
+    sounds louder the further he is, and quieter when he is close."
 --- !u!222 &373953115
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -301,9 +302,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   textoIntroductorio: {fileID: 373953114}
-  tiempoParaAparecer: 1.7
-  tiempoParaQuedarse: 6
-  tiempoParaDesaparecer: 1.7
+  tiempoParaAparecer: 1.8
+  tiempoParaQuedarse: 10
+  tiempoParaDesaparecer: 0.5
 --- !u!1 &1042486973
 GameObject:
   m_ObjectHideFlags: 0

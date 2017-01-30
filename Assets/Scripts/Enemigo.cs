@@ -127,7 +127,10 @@ public class Enemigo : MonoBehaviour
 
     bool foundThePlayerForTheFirstTime;
 
+    float playerRefreshCooldown = 2f;
     //MenuController menuController;
+
+    float lastPlayerPositionUpdate;
 
     void Start()
     {
@@ -344,17 +347,21 @@ public class Enemigo : MonoBehaviour
     /// <param name="position"></param>
     public void EscucharSonido(Vector3 position)
     {
-        navMeshAgent.speed = chasingSpeed;
-        SetTarget(position);
-        if (Time.time > lastMenacingSound + menacingSoundCooldown)
+        if (Time.time > lastPlayerPositionUpdate + playerRefreshCooldown)
         {
-            PlayMenacingSound();
-        }
-        ChasingThePlayer();
-        if (!foundThePlayerForTheFirstTime)
-        {
-            EventController.currentEvent = 3;
-            foundThePlayerForTheFirstTime = true;
+            lastPlayerPositionUpdate = Time.time;
+            navMeshAgent.speed = chasingSpeed;
+            SetTarget(position);
+            if (Time.time > lastMenacingSound + menacingSoundCooldown)
+            {
+                PlayMenacingSound();
+            }
+            ChasingThePlayer();
+            if (!foundThePlayerForTheFirstTime)
+            {
+                EventController.currentEvent++;
+                foundThePlayerForTheFirstTime = true;
+            }
         }
     }
 

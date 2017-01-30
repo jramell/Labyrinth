@@ -27,12 +27,13 @@ public class IntroductionController : MonoBehaviour {
 
     IEnumerator Introduction()
     {
+        yield return new WaitForSeconds(1f);
         float rateOfFade = 1 / tiempoParaAparecer * 0.01f;
         while (textoIntroductorio.color.a < 1)
         {
             textColor.a += rateOfFade;
             textoIntroductorio.color = textColor;
-            yield return new WaitForSeconds(rateOfFade);
+            yield return new WaitForSeconds(0.01f);
         }
         yield return new WaitForSeconds(tiempoParaQuedarse);
 
@@ -41,7 +42,7 @@ public class IntroductionController : MonoBehaviour {
         {
             textColor.a -= rateOfFade;
             textoIntroductorio.color = textColor;
-            yield return new WaitForSeconds(rateOfFade);
+            yield return new WaitForSeconds(0.01f);
         }
         yield return new WaitForSeconds(0.5f);
         SceneManager.LoadScene(SceneController.ESCENA_PRIMER_NIVEL);

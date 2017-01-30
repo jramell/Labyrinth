@@ -29,7 +29,7 @@ public class SprayController : MonoBehaviour
     }
     void Update()
     {
-        if (Input.GetKeyDown(TestCamera.INTERACTION_KEY))
+        if (Input.GetKeyDown(TestCamera.INTERACTION_KEY) || Input.GetMouseButtonDown(0) || Input.GetKeyDown(TestCamera.ALTERNATIVE_INTERACTION_KEY))
         {
             ray = new Ray(currentCamera.transform.position, currentCamera.transform.forward * 2);
 

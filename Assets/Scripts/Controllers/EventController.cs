@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.AI;
 
 public class EventController : MonoBehaviour
 {
@@ -31,6 +32,8 @@ public class EventController : MonoBehaviour
 
     MusicController musicController;
 
+    public static bool playedMoreThanOneTime;
+
     void Start()
     {
         enemigo = GameObject.FindGameObjectWithTag("Enemigo");
@@ -49,7 +52,17 @@ public class EventController : MonoBehaviour
             if (enemigoScript.targetReached)
             {
                 enemigoScript.SetTarget(new Vector3(-20.8f, 173.4f, 14.4f));
+                
+                //menuController.SetInteractionText("[F] Skip");
                 currentEvent++;
+            }
+
+            if (playedMoreThanOneTime)
+            {
+                if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(TestCamera.ESCAPE) || Input.GetKeyDown(TestCamera.INTERACTION_KEY) || Input.GetKeyDown(TestCamera.ALTERNATIVE_INTERACTION_KEY))
+                {
+                    SkipIntroduction();
+                }
             }
         }
 
@@ -57,23 +70,25 @@ public class EventController : MonoBehaviour
         {
             if (enemigoScript.targetReached)
             {
-                enemigo.transform.position = enemySpawnPoint.position;
-                enemigoScript.Whistle();
-                //Reset enemy state to normal
-                enemigoScript.EnableChasing();
-                //enemigoScript.ResetValues();
-                playerScript.Enable();
-                enemigoScript.DisableChasing();
+                SkipIntroduction();
+            }
+
+            if (playedMoreThanOneTime)
+            {
+                if (Input.GetKeyDown(TestCamera.ESCAPE) || Input.GetKeyDown(TestCamera.INTERACTION_KEY) || Input.GetKeyDown(TestCamera.ALTERNATIVE_INTERACTION_KEY))
+                {
+                    SkipIntroduction();
+                }
             }
         }
 
-        else if (currentEvent == 3)
+        else if (currentEvent == 4)
         {
             menuController.SetInteractionText("[SHIFT] RUN");
             currentEvent++;
         }
 
-        else if (currentEvent == 4)
+        else if (currentEvent == 5)
         {
             if (Input.GetKeyDown(TestCamera.RUN_KEY))
             {
@@ -83,6 +98,21 @@ public class EventController : MonoBehaviour
         }
     }
 
+    public void SkipIntroduction()
+    {
+        enemigo.GetComponent<NavMeshAgent>().enabled = false;
+        enemigo.transform.position = enemySpawnPoint.position;
+        enemigo.GetComponent<NavMeshAgent>().enabled = true;
+        Debug.Log("enemy.position = " + enemigo.transform.position);
+        Debug.Log("enemy spawn position = " + enemySpawnPoint.position);
+        enemigoScript.Whistle();
+        //Reset enemy state to normal
+        enemigoScript.EnableChasing();
+        playerScript.Enable();
+        enemigoScript.DisableChasing();
+        playedMoreThanOneTime = true;
+        currentEvent = 3;
+    }
 
     public void PlayEnemyIntroduction()
     {
@@ -99,20 +129,21 @@ public class EventController : MonoBehaviour
         StartCoroutine(Win());
     }
 
+
     IEnumerator Win()
     {
-        tiempoParaGanar = winSFX.clip.length;
+        tiempoParaGanar = winSFX.clip.length - 5.5f;
         musicController.StopMusic();
         winSFX.Play();
         Color tempColor = winScreen.color;
-        float rateOfFade = 1 / tiempoParaGanar * 0.01f;
+        float rateOfFade = (1 / tiempoParaGanar) * 0.01f;
         while (winScreen.color.a < 1)
         {
             tempColor.a += rateOfFade;
             winScreen.color = tempColor;
-            yield return new WaitForSeconds(rateOfFade);
+            yield return new WaitForSeconds(0.01f);
         }
-        yield return new WaitForSeconds(1f);
+        //yield return new WaitForSeconds(1f);
         Application.Quit();
     }
     /// <summary>
